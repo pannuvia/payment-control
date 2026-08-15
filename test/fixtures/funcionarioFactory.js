@@ -1,6 +1,14 @@
+/**
+ * ARQUIVO: test/fixtures/funcionarioFactory.js
+ * DESCRIÇÃO: Factory para geração de dados de teste
+ * RESPONSABILIDADE:
+ *  - Armazenar a mutation GraphQL `CriarFuncionario`.
+ *  - Usar o @faker-js/faker para gerar massas de dados dinâmicas e realistas (CPF, Nome, Salário, Datas).
+ *  - Oferecer flexibilidade para sobrescrever campos específicos (overrides) em cenários de teste variados.
+ */
+
 const { fakerPT_BR: faker } = require('@faker-js/faker');
 
-// Mutation GraphQL
 const MUTATION_CRIAR_FUNCIONARIO = `
     mutation CriarFuncionario($input: CriarFuncionarioInput!) {
         criarFuncionario(input: $input) {
@@ -13,7 +21,6 @@ const MUTATION_CRIAR_FUNCIONARIO = `
         }
     }`;
 
-// Função que gera a massa de dados
 function gerarMassaFuncionario(overrides = {}) {
     const dataAdmissao = faker.date.past({ years: 2 });
     const dataDesligamento = faker.date.future({ years: 2, refDate: dataAdmissao });
@@ -28,7 +35,6 @@ function gerarMassaFuncionario(overrides = {}) {
     };
 }
 
-// Exporta para ser usado nos arquivos de testes
 module.exports = {
     MUTATION_CRIAR_FUNCIONARIO,
     gerarMassaFuncionario
