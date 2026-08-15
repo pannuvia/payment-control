@@ -1,34 +1,23 @@
 const request = require('supertest')
 const { expect } = require('chai')
 
-// Importa a factory e a mutation do arquivo funcionarioFactory.js
+// 1. Importa o helper de autenticação
+const { obterToken } = require('../../helpers/authHelper');
+
+// 2. Importa a factory e a mutation do arquivo funcionarioFactory.js
 const { 
     MUTATION_CRIAR_FUNCIONARIO, 
     gerarMassaFuncionario 
-} = require('../fixtures/funcionarioFactory');
+} = require('../../fixtures/funcionarioFactory');
 
 describe('Criar Funcionario - Mutation', () => {
    
     let token;
    
+ // 3. Chama o helper
     before(async () => {
-         const response = await request('http://localhost:4000')
-                .post('/graphql')
-                .send({
-                  query: `mutation Login($email: String!, $senha: String!) {
-                      login(email: $email, senha: $senha) {
-                        token
-                      }
-                    }`,
-                  variables: {
-                    email: 'admin@admin.com',
-                    senha: '123456'
-                  }
-                })
-            expect(response.status).to.equal(200);
-            expect(response.body.data.login).to.have.property('token')
-            token = response.body.data.login.token;  
-    })
+        token = await obterToken();
+    });
     
     it('deve criar funcionario quando preencho os campos obrigatorios com dados válidos', async () => {
         
