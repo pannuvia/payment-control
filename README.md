@@ -58,6 +58,7 @@ mutation {
 | **@faker-js/faker** | Geração dinâmica de massas de dados aleatórias |
 | **Mochawesome** | Geração de relatórios de testes automatizados em formato HTML/JSON |
 | **ESLint 9** | Análise estática, linting e padronização de código via Flat Config (`eslint.config.mjs`) |
+| **GitHub Actions** | Esteira de Integração Contínua (CI) para execução automática de lint e testes |
 
 ---
 
@@ -96,6 +97,10 @@ A suíte de testes cobre validações em nível de **Contrato (GraphQL Schema)**
 
 ```text
 payment-control/
+├── .github/
+│   └── workflows/        # Workflows de Integração Contínua (CI)
+│       └── ci.yml        # Pipeline do GitHub Actions (Lint, Server, Testes & Artefatos)
+│
 ├── src/                  # Código-fonte da API GraphQL
 │   ├── graphql/          # TypeDefs e Resolvers GraphQL
 │   ├── repositories/     # Manipulação de dados
@@ -126,7 +131,20 @@ payment-control/
 
 ---
 
-## 🚀 Como Executar os Testes, Relatórios e Qualidade de Código
+## 🔄 Integração Contínua (CI/CD com GitHub Actions)
+
+O projeto possui uma esteira automatizada configurada via **GitHub Actions** (`.github/workflows/ci.yml`), disparada a cada `push` ou `pull request` nas branches `main` e `develop`.
+
+### Etapas da Pipeline Automatizada:
+1. **Análise Estática:** Execução do `npm run lint` com o ESLint 9 para validar a qualidade do código.
+2. **Inicialização da API:** Subida automática do servidor GraphQL em background no ambiente Linux (`ubuntu-latest`).
+3. **Aguardar Prontidão:** Verificação do status da API via `curl` até estar pronta na porta `4000`.
+4. **Execução de Testes:** Execução completa da suíte de testes com a flag `--reporter mochawesome`.
+5. **Publicação de Artefatos:** Armazenamento automático do relatório visual HTML/JSON gerado pelo Mochawesome na aba **Actions** do repositório para consulta e download.
+
+---
+
+## 🚀 Como Executar os Testes, Relatórios e Qualidade de Código Localmente
 
 ### Pré-requisitos
 - **Node.js** (v18 ou superior)
@@ -138,6 +156,9 @@ payment-control/
 # Executar a suíte completa de testes
 npx mocha --recursive "test/specs/**/*.test.js"
 
+# Executar a suíte gerando o relatório visual do Mochawesome
+npx mocha --reporter mochawesome --recursive "test/specs/**/*.test.js"
+
 # Executar apenas os testes de criarFuncionario
 npx mocha "test/specs/mutations/criarFuncionario.test.js"
 
@@ -147,9 +168,6 @@ npx mocha "test/specs/mutations/login.test.js"
 # Executar a suíte em ambiente de QA / Staging (sobrescrevendo a URL base)
 API_URL=[https://qa-api.paymentcontrol.com](https://qa-api.paymentcontrol.com) npx mocha --recursive "test/specs/**/*.test.js"
 ```
-
-### Geração de Relatórios (Mochawesome)
-O projeto conta com integração ao Mochawesome para a geração automática de relatórios visuais detalhados em HTML e JSON das execuções de testes, salvos no diretório `mochawesome-report/`.
 
 ### Análise Estática de Código (Linting)
 
@@ -171,5 +189,6 @@ npm run lint
 | **Organização por Contextos** | Estruturação dos cenários com blocos `context()` do Mocha, separando claramente testes de Sucesso, Segurança, Regras de Negócio e Validações de Schema. |
 | **Tratamento de Erros GraphQL** | Separação das asserções de erro entre HTTP 200 (erros de negócio/resolução) e HTTP 400 (erros de parsing/schema estático). |
 | **Relatórios Automatizados** | Emissão de relatórios estruturados (HTML/JSON) via **Mochawesome** para rastreabilidade de execuções de testes. |
+| **Integração Contínua (CI)** | Automação da verificação do código via **GitHub Actions**, garantindo a execução do ESLint, suíte de testes e upload de relatórios em cada envio de código. |
 | **Padronização ESLint 9 (Flat Config)** | Mapeamento nativo dos globais de testes Mocha (`describe`, `it`, `context`, `before`) no arquivo `eslint.config.mjs` via `globals.mocha`. |
 | **Gestão Limpa de Variáveis** | Remoção de variáveis órfãs (`no-unused-vars`) na montagem de massas de testes via operador `delete` e uso de *Optional Catch Binding* (`catch { ... }`) na captura de erros do servidor. |
