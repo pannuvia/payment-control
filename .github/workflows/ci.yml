@@ -31,12 +31,17 @@ jobs:
 
       - name: Aguardar API iniciar
         run: |
-          timeout 30s bash -c '
-            until curl -s http://127.0.0.1:4000/graphql > /dev/null; do
-              printf "."
-              sleep 1
-            done
-          
+          for i in {1..30}; do
+            if curl -s http://127.0.0.1:4000/graphql > /dev/null; then
+              echo "API iniciada com sucesso!"
+              exit 0
+            fi
+            echo "Aguardando API subir... ($i/30)"
+            sleep 1
+          done
+          echo "Erro: A API não respondeu após 30 segundos."
+          exit 1
+
       - name: Executar Suíte de Testes Automatizados
         run: npx mocha --recursive "test/specs/**/*.test.js"
         env:
