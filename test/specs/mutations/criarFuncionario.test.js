@@ -21,22 +21,39 @@
  *    - O Chai valida se o status HTTP retornou 200 e se o funcionário foi criado com ID.
  */
 
+// Importa o cliente HTTP Supertest para requisições de API
 const supertest = require('supertest');
+
+// Importa a biblioteca de asserções BDD Chai
 const { expect } = require('chai');
+
+// Importa a URL base configurada para o ambiente
 const { API_URL } = require('../../config/env');
+
+// Importa o helper de autenticação para obtenção prévia do token JWT
 const { obterToken } = require('../../helpers/authHelper');
+
+// Importa a mutation GraphQL e a factory de dados para geração de funcionários
 const { MUTATION_CRIAR_FUNCIONARIO, gerarMassaFuncionario } = require('../../fixtures/funcionarioFactory');
 
+// Bloco da suíte de testes da mutation de Criar Funcionário
 describe('Criar Funcionário - Mutation GraphQL', () => {
   let token;
 
+  // Hook executado uma vez antes de iniciar os testes da suíte para obter o token JWT de admin
   before(async () => {
     token = await obterToken();
   });
 
+  /**
+   * Helper local para disparar a requisição de criação de funcionário com os headers de autorização
+   * @param {Object} input - Dados do funcionário a serem enviados
+   * @param {string|null} tokenHeader - Token JWT para o header Authorization (padrão: token obtido no before)
+   */
   const executarCriarFuncionario = (input, tokenHeader = token) => {
     const req = supertest(API_URL).post('/graphql');
     
+    // Anexa o cabeçalho Bearer Token caso um token válido seja repassado
     if (tokenHeader) {
       req.set('Authorization', `Bearer ${tokenHeader}`);
     }
@@ -49,6 +66,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
 
   context('Cenários de Sucesso', () => {
     it('deve criar um funcionário com apenas campos obrigatórios', async () => {
+      // Cria a massa e remove o campo opcional desligamento
       const massaObrigatoria = gerarMassaFuncionario();
       delete massaObrigatoria.desligamento;
 
@@ -60,6 +78,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
     });
 
     it('deve criar um funcionário com todos os campos preenchidos', async () => {
+      // Cria a massa completa incluindo campos opcionais
       const massa = gerarMassaFuncionario();
       const response = await executarCriarFuncionario(massa);
 
@@ -71,6 +90,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
   context('Cenários de Falha - Segurança e Autenticação', () => {
     it('deve falhar ao tentar criar funcionário sem token de autorização', async () => {
       const massa = gerarMassaFuncionario();
+      // Executa enviando null no token do header
       const response = await executarCriarFuncionario(massa, null);
 
       expect(response.status).to.equal(200);
@@ -81,6 +101,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
     it('deve falhar ao tentar criar funcionário com token inválido', async () => {
       const massa = gerarMassaFuncionario();
       const tokenInvalido = 'eyJhYmdjL29wZW5haS1pbnZhbGlkLXRva2Vu.payload.signature';
+      // Executa enviando uma assinatura JWT corrompida
       const response = await executarCriarFuncionario(massa, tokenInvalido);
 
       expect(response.status).to.equal(200);
@@ -93,8 +114,10 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
     it('deve falhar ao tentar cadastrar funcionário já existente (CPF duplicado)', async () => {
       const massaBase = gerarMassaFuncionario();
       
+      // Cadastra o primeiro funcionário para ocupar o CPF
       await executarCriarFuncionario(massaBase);
 
+      // Tenta cadastrar um segundo funcionário com o mesmo CPF
       const massaDuplicada = gerarMassaFuncionario({ cpf: massaBase.cpf });
       const response = await executarCriarFuncionario(massaDuplicada);
 
@@ -104,6 +127,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
     });
 
     it('deve falhar ao tentar cadastrar funcionário com salário zero ou negativo', async () => {
+      // Sobrescreve o salário base com um valor negativo
       const massaSalarioInvalido = gerarMassaFuncionario({ salario_base: -1500.00 });
       const response = await executarCriarFuncionario(massaSalarioInvalido);
 
@@ -113,6 +137,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
     });
 
     it('deve falhar ao tentar cadastrar funcionário com data de desligamento anterior à admissão', async () => {
+      // Sobrescreve datas criando uma incoerência temporal
       const massaDatasIncoerentes = gerarMassaFuncionario({
         admissao: '2026-06-01',
         desligamento: '2026-01-01'
@@ -125,6 +150,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
     });
 
     it('deve falhar ao tentar cadastrar funcionário com data de admissão no futuro distante', async () => {
+      // Sobrescreve a data de admissão para o ano de 2099
       const massaDataFutura = gerarMassaFuncionario({ admissao: '2099-01-01' });
       const response = await executarCriarFuncionario(massaDataFutura);
 
@@ -134,6 +160,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
     });
 
     it('deve falhar ao tentar cadastrar funcionário com nome contendo apenas espaços', async () => {
+      // Sobrescreve o nome apenas com caracteres de espaço em branco
       const massaNomeEspacos = gerarMassaFuncionario({ nome: '   ' });
       const response = await executarCriarFuncionario(massaNomeEspacos);
 
@@ -173,6 +200,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
     });
 
     it('deve falhar ao passar tipo de dado incorreto para o salario_base', async () => {
+      // Tenta enviar uma string no lugar de um Float/Int
       const massaTipoIncorreto = gerarMassaFuncionario({ salario_base: 'texto_invalido' });
       const response = await executarCriarFuncionario(massaTipoIncorreto);
 
@@ -181,6 +209,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
     });
 
     it('deve falhar ao passar data de admissao em formato invalido', async () => {
+      // Envia formato DD/MM/YYYY em vez do padrão aceito YYYY-MM-DD
       const massaDataInvalida = gerarMassaFuncionario({ admissao: '31/12/2026' });
       const response = await executarCriarFuncionario(massaDataInvalida);
 
