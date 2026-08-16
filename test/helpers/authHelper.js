@@ -1,6 +1,7 @@
 /**
  * ARQUIVO: test/helpers/authHelper.js
  * DESCRIÇÃO: Helper de autenticação.
+ * 
  * RESPONSABILIDADE:
  *  - Executar a mutation de login GraphQL contra a API.
  *  - Capturar e retornar o token JWT (Bearer Token) válido.

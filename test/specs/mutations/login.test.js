@@ -38,7 +38,7 @@ const enviarLogin = (variables) => {
 
 describe('Login - Mutation', () => {
 
-  context('Sucesso', () => {
+  context('Cenário de Sucesso', () => {
     it('deve autenticar com sucesso e retornar um token JWT válido', async () => {
       const response = await enviarLogin({
         email: 'admin@admin.com',
@@ -52,7 +52,7 @@ describe('Login - Mutation', () => {
     });
   });
 
-  context('Falha nas Regras de Negócio (Status HTTP 200 com erro na resposta)', () => {
+  context('Cenário de Falha - Regras de Negócio (Status HTTP 200 com erro na resposta)', () => {
     it('deve falhar ao tentar login com email inválido', async () => {
       const response = await enviarLogin({
         email: 'admin#admin.com',
@@ -99,7 +99,7 @@ describe('Login - Mutation', () => {
     });
   });
 
-  context('Falha no Schema GraphQL (Status HTTP 400)', () => {
+  context('Cenário de Falha - Schema GraphQL (Status HTTP 400)', () => {
     it('deve falhar ao tentar login sem enviar o campo email', async () => {
       const response = await enviarLogin({
         senha: '123456'

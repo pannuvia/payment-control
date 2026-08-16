@@ -1,6 +1,7 @@
 /**
  * ARQUIVO: test/fixtures/funcionarioFactory.js
  * DESCRIÇÃO: Factory para geração de dados de teste
+ * 
  * RESPONSABILIDADE:
  *  - Armazenar a mutation GraphQL `CriarFuncionario`.
  *  - Usar o @faker-js/faker para gerar massas de dados dinâmicas e realistas (CPF, Nome, Salário, Datas).
