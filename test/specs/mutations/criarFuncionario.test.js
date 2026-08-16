@@ -49,7 +49,9 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
 
   context('Cenários de Sucesso', () => {
     it('deve criar um funcionário com apenas campos obrigatórios', async () => {
-      const { desligamento, ...massaObrigatoria } = gerarMassaFuncionario();
+      const massaObrigatoria = gerarMassaFuncionario();
+      delete massaObrigatoria.desligamento;
+
       const response = await executarCriarFuncionario(massaObrigatoria);
 
       expect(response.status).to.equal(200);
@@ -143,7 +145,9 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
 
   context('Cenários de Falha - Schema GraphQL (HTTP 400)', () => {
     it('deve falhar ao omitir o campo obrigatório cpf', async () => {
-      const { cpf, ...massaSemCpf } = gerarMassaFuncionario();
+      const massaSemCpf = gerarMassaFuncionario();
+      delete massaSemCpf.cpf;
+
       const response = await executarCriarFuncionario(massaSemCpf);
 
       expect(response.status).to.equal(400);
@@ -151,7 +155,9 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
     });
 
     it('deve falhar ao omitir o campo obrigatório nome', async () => {
-      const { nome, ...massaSemNome } = gerarMassaFuncionario();
+      const massaSemNome = gerarMassaFuncionario();
+      delete massaSemNome.nome;
+
       const response = await executarCriarFuncionario(massaSemNome);
 
       expect(response.status).to.equal(400);
@@ -167,7 +173,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
     });
 
     it('deve falhar ao passar tipo de dado incorreto para o salario_base', async () => {
-      const massaTipoIncorreto = gerarMassaFuncionario({ salario_base: "texto_invalido" });
+      const massaTipoIncorreto = gerarMassaFuncionario({ salario_base: 'texto_invalido' });
       const response = await executarCriarFuncionario(massaTipoIncorreto);
 
       expect(response.status).to.equal(400);
@@ -175,7 +181,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
     });
 
     it('deve falhar ao passar data de admissao em formato invalido', async () => {
-      const massaDataInvalida = gerarMassaFuncionario({ admissao: "31/12/2026" });
+      const massaDataInvalida = gerarMassaFuncionario({ admissao: '31/12/2026' });
       const response = await executarCriarFuncionario(massaDataInvalida);
 
       expect(response.body).to.have.property('errors');
