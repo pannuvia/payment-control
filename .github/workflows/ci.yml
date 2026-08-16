@@ -1,8 +1,10 @@
 name: CI - Payment Control
 
 on:
-  push:
-    branches: [ main, master ]
+push:
+    branches: [ main, develop ]
+pull_request:
+    branches: [ main, develop ]
 
 jobs:
   test-and-lint:
