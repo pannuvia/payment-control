@@ -1,0 +1,45 @@
+name: CI - Payment Control
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Executar Análise Estática (ESLint)
+        run: npm run lint
+
+      - name: Iniciar Servidor da API GraphQL em Background
+        run: npm start &
+        env:
+          PORT: 4000
+
+      - name: Aguardar API iniciar
+        run: npx wait-on http://localhost:4000/graphql -t 15000
+
+      - name: Executar Suíte de Testes Automatizados
+        run: npx mocha --recursive "test/specs/**/*.test.js"
+        env:
+          API_URL: http://localhost:4000
+
+      - name: Salvar Relatórios Mochawesome (Artifacts)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mochawesome-report
+          path: mochawesome-report/
