@@ -1,35 +1,46 @@
+# Nome da Action que aparecerá na aba "Actions" do GitHub
 name: CI - Payment Control
 
+# Gatilhos de execução: define quando a pipeline será disparada automaticamente
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop ]       # Executa ao fazer push direto nessas branches
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop ]       # Executa ao abrir ou atualizar um Pull Request para essas branches
 
 jobs:
+  # Identificador único do Job
   ci-pipeline:
+    # Nome exibido na interface do GitHub Actions
     name: Qualidade e Testes Automatizados
+    # Sistema operacional da máquina virtual temporária fornecida pelo GitHub
     runs-on: ubuntu-latest
 
     steps:
+      # Passo 1: Baixa o código do repositório para a máquina virtual
       - name: Checkout do código
         uses: actions/checkout@v4
 
+      # Passo 2: Configura o ambiente de execução com Node.js na versão 24
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'npm'                # Otimiza as execuções salvando em cache os pacotes do npm
 
+      # Passo 3: Instala as dependências do projeto com base no package-lock.json
       - name: Instalar dependências
         run: npm ci
 
+      # Passo 4: Executa a análise estática de código (ESLint 9) para garantir os padrões do projeto
       - name: Executar Análise Estática (ESLint)
         run: npm run lint
 
+      # Passo 5: Inicializa o servidor da API GraphQL em segundo plano (usando & no final)
       - name: Iniciar Servidor da API GraphQL em Background
         run: npm start &
 
+      # Passo 6: Loop de verificação (Health Check) para aguardar a API subir na porta 4000
       - name: Aguardar API iniciar
         run: |
           for i in {1..30}; do
@@ -43,14 +54,16 @@ jobs:
           echo "Erro: A API não respondeu após 30 segundos."
           exit 1
 
+      # Passo 7: Executa a suíte de testes com Mocha e gera o relatório do Mochawesome
       - name: Executar Suíte de Testes Automatizados
         run: npx mocha --reporter mochawesome --recursive "test/specs/**/*.test.js"
         env:
-          API_URL: http://localhost:4000  
+          API_URL: http://localhost:4000  # Variável de ambiente com a URL da API em execução
 
+      # Passo 8: Salva o relatório gerado em HTML/JSON como um artefato para download no GitHub
       - name: Salvar Relatórios Mochawesome (Artifacts)
-        if: always()
+        if: always()                    # Garante a execução mesmo se algum teste falhar
         uses: actions/upload-artifact@v4
         with:
-          name: mochawesome-report
-          path: mochawesome-report/
+          name: mochawesome-report       # Nome da pasta comprimida (.zip) do artefato
+          path: mochawesome-report/      # Caminho da pasta onde os relatórios foram gerados
