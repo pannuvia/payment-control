@@ -14,10 +14,11 @@ async function buildContext({ req }) {
     const payload = verifyToken(header.slice(7));
     const user = userRepository.findById(payload.sub);
     return { user: user?.ativo ? user : null };
-  } catch (_) {
+  } catch {
     return { user: null };
   }
 }
+
 async function start() {
   const app = express();
   const server = new ApolloServer({ typeDefs, resolvers });
@@ -26,6 +27,7 @@ async function start() {
   const port = Number(process.env.PORT) || 4000;
   app.listen(port, () => console.log(`GraphQL disponível em http://localhost:${port}/graphql`));
 }
+
 start().catch((error) => { console.error(error); process.exit(1); });
 
 module.exports = { buildContext };
