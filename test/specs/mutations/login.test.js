@@ -16,10 +16,16 @@
  *    - O Chai valida a emissão do token JWT nos cenários de sucesso, as mensagens de erro em validações de negócio (status 200) e os erros de validação do schema GraphQL (status 400).
  */
 
+// Importa o Supertest para disparar requisições HTTP contra a API
 const request = require('supertest');
+
+// Importa a biblioteca de asserções Chai para validar respostas e dados
 const { expect } = require('chai');
+
+// Importa a URL base do servidor a partir das configurações de ambiente
 const { API_URL } = require('../../config/env');
 
+// Mutation GraphQL de Login parametrizada com email e senha
 const MUTATION_LOGIN = `
   mutation Login($email: String!, $senha: String!) {
     login(email: $email, senha: $senha) {
@@ -27,6 +33,11 @@ const MUTATION_LOGIN = `
     }
   }`;
 
+/**
+ * Helper local para reuso das chamadas de login enviando as variáveis da requisição.
+ * @param {Object} variables - Objeto com os parâmetros da mutation (ex: { email, senha })
+ * @returns {Promise} - Retorna a promessa da resposta do Supertest
+ */
 const enviarLogin = (variables) => {
   return request(API_URL)
     .post('/graphql')
@@ -36,10 +47,12 @@ const enviarLogin = (variables) => {
     });
 };
 
+// Bloco da suíte de testes da mutation de Login
 describe('Login - Mutation', () => {
 
   context('Cenário de Sucesso', () => {
     it('deve autenticar com sucesso e retornar um token JWT válido', async () => {
+      // Dispara a requisição com credenciais válidas do administrador
       const response = await enviarLogin({
         email: 'admin@admin.com',
         senha: '123456'
@@ -58,6 +71,7 @@ describe('Login - Mutation', () => {
         email: 'admin#admin.com',
         senha: '123456'
       });
+
       expect(response.status).to.equal(200);
       expect(response.body.errors[0]).to.have.property('message', 'Credenciais inválidas ou usuário inativo.');
     });
@@ -67,6 +81,7 @@ describe('Login - Mutation', () => {
         email: 'admin@admin.com',
         senha: '1234567'
       });
+   
       expect(response.status).to.equal(200);
       expect(response.body.errors[0]).to.have.property('message', 'Credenciais inválidas ou usuário inativo.');
     });
@@ -76,6 +91,7 @@ describe('Login - Mutation', () => {
         email: '',
         senha: '123456'
       });
+     
       expect(response.status).to.equal(200);
       expect(response.body.errors[0]).to.have.property('message', 'Credenciais inválidas ou usuário inativo.');
     });
@@ -85,6 +101,7 @@ describe('Login - Mutation', () => {
         email: 'admin@admin.com',
         senha: ''
       });
+  
       expect(response.status).to.equal(200);
       expect(response.body.errors[0]).to.have.property('message', 'Credenciais inválidas ou usuário inativo.');
     });
@@ -94,6 +111,7 @@ describe('Login - Mutation', () => {
         email: '',
         senha: ''
       });
+     
       expect(response.status).to.equal(200);
       expect(response.body.errors[0]).to.have.property('message', 'Credenciais inválidas ou usuário inativo.');
     });
@@ -104,6 +122,7 @@ describe('Login - Mutation', () => {
       const response = await enviarLogin({
         senha: '123456'
       });
+
       expect(response.status).to.equal(400);
       expect(response.body.errors[0]).to.have.property('message', 'Variable "$email" of required type "String!" was not provided.');
     });
@@ -112,6 +131,7 @@ describe('Login - Mutation', () => {
       const response = await enviarLogin({
         email: 'admin@admin.com'
       });
+
       expect(response.status).to.equal(400);
       expect(response.body.errors[0]).to.have.property('message', 'Variable "$senha" of required type "String!" was not provided.');
     });
@@ -121,6 +141,7 @@ describe('Login - Mutation', () => {
         email: null,
         senha: '123456'
       });
+
       expect(response.status).to.equal(400);
       expect(response.body.errors[0]).to.have.property('message', 'Variable "$email" of non-null type "String!" must not be null.');
     });
@@ -130,6 +151,7 @@ describe('Login - Mutation', () => {
         email: 'admin@admin.com',
         senha: null
       });
+   
       expect(response.status).to.equal(400);
       expect(response.body.errors[0]).to.have.property('message', 'Variable "$senha" of non-null type "String!" must not be null.');
     });
