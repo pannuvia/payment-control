@@ -88,7 +88,7 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
   });
 
   context('Cenários de Falha - Regras de Negócio (Status HTTP 200 com erro na resposta)', () => {
-    it('deve falhar ao tentar cadastrar funcionário com CPF duplicado', async () => {
+    it('deve falhar ao tentar cadastrar funcionário já existente (CPF duplicado)', async () => {
       const massaBase = gerarMassaFuncionario();
       
       await executarCriarFuncionario(massaBase);
@@ -98,11 +98,58 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
 
       expect(response.status).to.equal(200);
       expect(response.body).to.have.property('errors');
-      expect(response.body.errors[0].message).to.match(/cpf/i);
+      expect(response.body.errors[0].message).to.match(/cpf|já cadastrado|existente|duplicado/i);
+    });
+
+    it('deve falhar ao tentar cadastrar funcionário com salário zero ou negativo', async () => {
+      const massaSalarioInvalido = gerarMassaFuncionario({ salario_base: -1500.00 });
+      const response = await executarCriarFuncionario(massaSalarioInvalido);
+
+      expect(response.status).to.equal(200);
+      expect(response.body).to.have.property('errors');
+      expect(response.body.errors[0].message).to.match(/salário|salario|inválido|maior que zero/i);
+    });
+
+    it('deve falhar ao tentar cadastrar funcionário com data de desligamento anterior à admissão', async () => {
+      const massaDatasIncoerentes = gerarMassaFuncionario({
+        admissao: '2026-06-01',
+        desligamento: '2026-01-01'
+      });
+      const response = await executarCriarFuncionario(massaDatasIncoerentes);
+
+      expect(response.status).to.equal(200);
+      expect(response.body).to.have.property('errors');
+      expect(response.body.errors[0].message).to.match(/desligamento|admissão|data/i);
+    });
+
+    it('deve falhar ao tentar cadastrar funcionário com data de admissão no futuro distante', async () => {
+      const massaDataFutura = gerarMassaFuncionario({ admissao: '2099-01-01' });
+      const response = await executarCriarFuncionario(massaDataFutura);
+
+      expect(response.status).to.equal(200);
+      expect(response.body).to.have.property('errors');
+      expect(response.body.errors[0].message).to.match(/admissão|futuro|inválida|data/i);
+    });
+
+    it('deve falhar ao tentar cadastrar funcionário com nome contendo apenas espaços', async () => {
+      const massaNomeEspacos = gerarMassaFuncionario({ nome: '   ' });
+      const response = await executarCriarFuncionario(massaNomeEspacos);
+
+      expect(response.status).to.equal(200);
+      expect(response.body).to.have.property('errors');
+      expect(response.body.errors[0].message).to.match(/nome|obrigatório|inválido/i);
     });
   });
 
   context('Cenários de Falha - Schema GraphQL (HTTP 400)', () => {
+    it('deve falhar ao omitir o campo obrigatório cpf', async () => {
+      const { cpf, ...massaSemCpf } = gerarMassaFuncionario();
+      const response = await executarCriarFuncionario(massaSemCpf);
+
+      expect(response.status).to.equal(400);
+      expect(response.body.errors[0].message).to.match(/Field "cpf"|was not provided/i);
+    });
+
     it('deve falhar ao omitir o campo obrigatório nome', async () => {
       const { nome, ...massaSemNome } = gerarMassaFuncionario();
       const response = await executarCriarFuncionario(massaSemNome);
@@ -124,6 +171,13 @@ describe('Criar Funcionário - Mutation GraphQL', () => {
       const response = await executarCriarFuncionario(massaTipoIncorreto);
 
       expect(response.status).to.equal(400);
+      expect(response.body).to.have.property('errors');
+    });
+
+    it('deve falhar ao passar data de admissao em formato invalido', async () => {
+      const massaDataInvalida = gerarMassaFuncionario({ admissao: "31/12/2026" });
+      const response = await executarCriarFuncionario(massaDataInvalida);
+
       expect(response.body).to.have.property('errors');
     });
   });

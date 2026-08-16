@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "mocha test/specs/mutations/*.test.js"
+    "test": "mocha test/specs/mutations/*.test.js --reporter mochawesome --reporter-options reportDir=mochawesome-report,reportFilename=relatorio-testes,overwrite=true,html=true,json=true"
   },
   "dependencies": {
     "@apollo/server": "^5.0.0",
@@ -23,6 +23,7 @@
     "@faker-js/faker": "^10.6.0",
     "chai": "^4.5.0",
     "mocha": "^11.7.6",
+    "mochawesome": "^8.0.1",
     "supertest": "^7.2.2"
   }
 }
