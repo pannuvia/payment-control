@@ -56,6 +56,8 @@ mutation {
 | **Chai** | Biblioteca de asserções BDD (`expect`) |
 | **Supertest** | Cliente HTTP para testes de integração do endpoint `/graphql` |
 | **@faker-js/faker** | Geração dinâmica de massas de dados aleatórias |
+| **Mochawesome** | Geração de relatórios de testes automatizados em formato HTML/JSON |
+| **ESLint 9** | Análise estática, linting e padronização de código via Flat Config (`eslint.config.mjs`) |
 
 ---
 
@@ -77,10 +79,16 @@ A suíte de testes cobre validações em nível de **Contrato (GraphQL Schema)**
   * Rejeição de criação utilizando token JWT inválido ou adulterado.
 * **Regras de Negócio:**
   * Impedimento de cadastro duplicado para o mesmo `CPF`.
+  * Impedimento de cadastro com salário zero ou negativo.
+  * Impedimento de cadastro com data de desligamento anterior à data de admissão.
+  * Impedimento de cadastro com data de admissão em futuro distante.
+  * Impedimento de cadastro com nome composto apenas por espaços em branco.
 * **Validações de Schema GraphQL (HTTP 400):**
+  * Omissão do campo obrigatório `cpf`.
   * Omissão do campo obrigatório `nome`.
   * Envio do campo obrigatório `nome` com valor `null`.
   * Envio de tipo de dado incompatível para o campo `salario_base` (String em vez de Float/Int).
+  * Envio de data de admissão em formato inválido.
 
 ---
 
@@ -88,37 +96,43 @@ A suíte de testes cobre validações em nível de **Contrato (GraphQL Schema)**
 
 ```text
 payment-control/
-├── src/                      # Código-fonte da API GraphQL
-│   └── database.js           # Banco de dados em memória
+├── src/                  # Código-fonte da API GraphQL
+│   ├── graphql/          # TypeDefs e Resolvers GraphQL
+│   ├── repositories/     # Manipulação de dados
+│   ├── services/         # Regras de negócio e autenticação JWT
+│   ├── database.js       # Banco de dados em memória
+│   └── server.js         # Ponto de entrada do servidor e contexto da aplicação
 │
-├── test/                     # Suíte de Testes Automatizados
-│   ├── config/               # Configurações de ambiente
-│   │   └── env.js            # Centralização da URL base (API_URL)
+├── test/                 # Suíte de Testes Automatizados
+│   ├── config/           # Configurações de ambiente
+│   │   └── env.js        # Centralização da URL base (API_URL)
 │   │
-│   ├── fixtures/             # Data Factories e Queries/Mutations GraphQL
+│   ├── fixtures/         # Data Factories e Queries/Mutations GraphQL
 │   │   └── funcionarioFactory.js
 │   │
-│   ├── helpers/              # Funções de apoio e autenticação reutilizáveis
-│   │   └── authHelper.js     # Helper para geração de token JWT
+│   ├── helpers/          # Funções de apoio e autenticação reutilizáveis
+│   │   └── authHelper.js # Helper para geração de token JWT
 │   │
-│   └── specs/                # Testes automatizados organizados por tipo
+│   └── specs/            # Testes automatizados organizados por tipo
 │       └── mutations/
 │           ├── login.test.js
 │           └── criarFuncionario.test.js
 │
+├── mochawesome-report/   # Relatórios HTML/JSON gerados pela execução dos testes
+├── eslint.config.mjs     # Configuração de padronização estática (ESLint Flat Config)
 ├── package.json
 └── README.md
 ```
 
 ---
 
-## 🚀 Como Executar os Testes
+## 🚀 Como Executar os Testes, Relatórios e Qualidade de Código
 
 ### Pré-requisitos
 - **Node.js** (v18 ou superior)
 - A API GraphQL deve estar em execução (`npm start`) na porta `4000` (ou na URL configurada).
 
-### Comandos de Execução
+### Comandos de Execução dos Testes
 
 ```bash
 # Executar a suíte completa de testes
@@ -134,9 +148,19 @@ npx mocha "test/specs/mutations/login.test.js"
 API_URL=[https://qa-api.paymentcontrol.com](https://qa-api.paymentcontrol.com) npx mocha --recursive "test/specs/**/*.test.js"
 ```
 
+### Geração de Relatórios (Mochawesome)
+O projeto conta com integração ao Mochawesome para a geração automática de relatórios visuais detalhados em HTML e JSON das execuções de testes, salvos no diretório `mochawesome-report/`.
+
+### Análise Estática de Código (Linting)
+
+```bash
+# Executar a validação do ESLint em todo o projeto
+npm run lint
+```
+
 ---
 
-## 🏛️ Padrões de Arquitetura de Testes
+## 🏛️ Padrões de Arquitetura de Testes e Qualidade
 
 | Padrão / Camada | Descrição e Aplicação no Projeto |
 | :--- | :--- |
@@ -146,3 +170,6 @@ API_URL=[https://qa-api.paymentcontrol.com](https://qa-api.paymentcontrol.com) n
 | **Authentication Helpers** | O arquivo `authHelper.js` centraliza a obtenção de tokens JWT para reutilização no hook `before()` de endpoints protegidos. |
 | **Organização por Contextos** | Estruturação dos cenários com blocos `context()` do Mocha, separando claramente testes de Sucesso, Segurança, Regras de Negócio e Validações de Schema. |
 | **Tratamento de Erros GraphQL** | Separação das asserções de erro entre HTTP 200 (erros de negócio/resolução) e HTTP 400 (erros de parsing/schema estático). |
+| **Relatórios Automatizados** | Emissão de relatórios estruturados (HTML/JSON) via **Mochawesome** para rastreabilidade de execuções de testes. |
+| **Padronização ESLint 9 (Flat Config)** | Mapeamento nativo dos globais de testes Mocha (`describe`, `it`, `context`, `before`) no arquivo `eslint.config.mjs` via `globals.mocha`. |
+| **Gestão Limpa de Variáveis** | Remoção de variáveis órfãs (`no-unused-vars`) na montagem de massas de testes via operador `delete` e uso de *Optional Catch Binding* (`catch { ... }`) na captura de erros do servidor. |
