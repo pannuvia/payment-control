@@ -1,10 +1,10 @@
 name: CI - Payment Control
 
 on:
-push:
-    branches: [ main, develop ]
-pull_request:
-    branches: [ main, develop ]
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
 
 jobs:
   test-and-lint:
@@ -28,11 +28,13 @@ jobs:
 
       - name: Iniciar Servidor da API GraphQL em Background
         run: npm start &
-        env:
-          PORT: 4000
 
       - name: Aguardar API iniciar
-        run: npx wait-on http://localhost:4000/graphql -t 15000
+        run: |
+          until curl --output /dev/null --silent --head --fail http://localhost:4000/graphql; do
+            printf '.'
+            sleep 1
+          done
 
       - name: Executar Suíte de Testes Automatizados
         run: npx mocha --recursive "test/specs/**/*.test.js"
